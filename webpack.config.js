@@ -29,10 +29,16 @@ module.exports = [{
   name: 'js-components',
   entry: {
     autoInit: [path.resolve('./packages/mdl-auto-init/index.js')],
-    Base: [path.resolve('./packages/mdl-base/index.js')],
-    Checkbox: [path.resolve('./packages/mdl-checkbox/index.js')],
-    Radio: [path.resolve('./packages/mdl-radio/index.js')],
-    Ripple: [path.resolve('./packages/mdl-ripple/index.js')]
+    base: [path.resolve('./packages/mdl-base/index.js')],
+    checkbox: [path.resolve('./packages/mdl-checkbox/index.js')],
+    drawer: [path.resolve('./packages/mdl-drawer/index.js')],
+    iconToggle: [path.resolve('./packages/mdl-icon-toggle/index.js')],
+    menu: [path.resolve('./packages/mdl-menu/index.js')],
+    radio: [path.resolve('./packages/mdl-radio/index.js')],
+    ripple: [path.resolve('./packages/mdl-ripple/index.js')],
+    select: [path.resolve('./packages/mdl-select/index.js')],
+    snackbar: [path.resolve('./packages/mdl-snackbar/index.js')],
+    textfield: [path.resolve('./packages/mdl-textfield/index.js')]
   },
   output: {
     path: OUT_PATH,
@@ -75,16 +81,24 @@ module.exports = [{
   entry: {
     'material-design-lite': path.resolve(
         './packages/material-design-lite/material-design-lite.scss'),
-    'mdl-animation': path.resolve('./packages/mdl-animation/mdl-animation.scss'),
-    'mdl-button': path.resolve('./packages/mdl-button/mdl-button.scss'),
-    'mdl-card': path.resolve('./packages/mdl-card/mdl-card.scss'),
-    'mdl-checkbox': path.resolve('./packages/mdl-checkbox/mdl-checkbox.scss'),
-    'mdl-elevation': path.resolve('./packages/mdl-elevation/mdl-elevation.scss'),
-    'mdl-fab': path.resolve('./packages/mdl-fab/mdl-fab.scss'),
-    'mdl-list': path.resolve('./packages/mdl-list/mdl-list.scss'),
-    'mdl-ripple': path.resolve('./packages/mdl-ripple/mdl-ripple.scss'),
-    'mdl-theme': path.resolve('./packages/mdl-theme/mdl-theme.scss'),
-    'mdl-typography': path.resolve('./packages/mdl-typography/mdl-typography.scss')
+    'mdl.animation': path.resolve('./packages/mdl-animation/mdl-animation.scss'),
+    'mdl.button': path.resolve('./packages/mdl-button/mdl-button.scss'),
+    'mdl.card': path.resolve('./packages/mdl-card/mdl-card.scss'),
+    'mdl.checkbox': path.resolve('./packages/mdl-checkbox/mdl-checkbox.scss'),
+    'mdl.drawer': path.resolve('./packages/mdl-drawer/mdl-drawer.scss'),
+    'mdl.elevation': path.resolve('./packages/mdl-elevation/mdl-elevation.scss'),
+    'mdl.fab': path.resolve('./packages/mdl-fab/mdl-fab.scss'),
+    'mdl.form-field': path.resolve('./packages/mdl-form-field/mdl-form-field.scss'),
+    'mdl.icon-toggle': path.resolve('./packages/mdl-icon-toggle/mdl-icon-toggle.scss'),
+    'mdl.list': path.resolve('./packages/mdl-list/mdl-list.scss'),
+    'mdl.menu': path.resolve('./packages/mdl-menu/mdl-menu.scss'),
+    'mdl.radio': path.resolve('./packages/mdl-radio/mdl-radio.scss'),
+    'mdl.ripple': path.resolve('./packages/mdl-ripple/mdl-ripple.scss'),
+    'mdl.select': path.resolve('./packages/mdl-select/mdl-select.scss'),
+    'mdl.snackbar': path.resolve('./packages/mdl-snackbar/mdl-snackbar.scss'),
+    'mdl.textfield': path.resolve('./packages/mdl-textfield/mdl-textfield.scss'),
+    'mdl.theme': path.resolve('./packages/mdl-theme/mdl-theme.scss'),
+    'mdl.typography': path.resolve('./packages/mdl-typography/mdl-typography.scss')
   },
   output: {
     path: OUT_PATH,

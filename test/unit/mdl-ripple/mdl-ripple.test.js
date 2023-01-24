@@ -19,7 +19,7 @@ import bel from 'bel';
 import domEvents from 'dom-events';
 import td from 'testdouble';
 
-import MDLRipple from '../../../packages/mdl-ripple';
+import {MDLRipple} from '../../../packages/mdl-ripple';
 import {cssClasses} from '../../../packages/mdl-ripple/constants';
 import * as util from '../../../packages/mdl-ripple/util';
 
@@ -48,6 +48,13 @@ test('attachTo overrides unbounded data attr when explicitly specified', t => {
   const root = bel`<div data-mdl-ripple-is-unbounded></div>`;
   const component = MDLRipple.attachTo(root, {isUnbounded: false});
   t.false(component.unbounded);
+  t.end();
+});
+
+test('createAdapter() returns the same adapter used by default for the ripple', t => {
+  const root = bel`<div></div>`;
+  const component = MDLRipple.attachTo(root);
+  t.deepEqual(Object.keys(MDLRipple.createAdapter()), Object.keys(component.foundation_.adapter_));
   t.end();
 });
 

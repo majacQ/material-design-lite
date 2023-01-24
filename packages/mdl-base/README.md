@@ -1,8 +1,5 @@
 # mdl-base
 
-> NOTE: Please do not use or rely on `adapter.js`. It is deprecated and in the process of being
-> removed.
-
 MDL base contains core foundation and component classes that serve as the base classes for all of MDL's foundation classes and components (respectively).
 
 Most of the time, you shouldn't need to depend on `mdl-base` directly. It is useful however if you'd like to write custom components that follow MDL's pattern and elegantly integrate with the MDL ecosystem.
@@ -18,12 +15,12 @@ Then include it in your code in one of the following ways:
 #### ES2015+
 
 ```javascript
-import MDLComponent, {MDLFoundation} from 'mdl-base';
+import {MDLComponent, MDLFoundation} from 'mdl-base';
 ```
 #### CommonJS
 
 ```javascript
-const MDLComponent = require('mdl-base').default;
+const MDLComponent = require('mdl-base').MDLComponent;
 const MDLFoundation = require('mdl-base').MDLFoundation;
 ```
 
@@ -31,7 +28,7 @@ const MDLFoundation = require('mdl-base').MDLFoundation;
 
 ```javascript
 require(['path/to/mdl-base'], function(mdlBase) {
-  const MDLComponent = mdlBase.default;
+  const MDLComponent = mdlBase.MDLComponent;
   const MDLFoundation = mdlBase.MDLFoundation;
 });
 ```
@@ -39,8 +36,8 @@ require(['path/to/mdl-base'], function(mdlBase) {
 #### Vanilla
 
 ```javascript
-const MDLComponent = mdl.Base.default;
-const MDLFoundation = mdl.Base.MDLFoundation;
+const MDLComponent = mdl.base.MDLComponent;
+const MDLFoundation = mdl.base.MDLFoundation;
 ```
 
 ## Usage
@@ -115,8 +112,6 @@ Each foundation class has two lifecycle methods: `init()` and `destroy()`, which
 | init() | called by a host class when a component is ready to be initialized | add event listeners, query for info via adapters, etc. |
 | destroy() | called by a host class when a component is no longer in use | remove event listeners, reset any transient state, etc. |
 
-> Please note: _the lifecycle methods are **not** a safe place to perform DOM reads/writes that would invalidate layout or cause a repaint_. If this needs to be done within these methods, it should be put into a `requestAnimationFrame()` call so that it's synchronized with the browser's refresh cycle and does not [cause jank](http://www.html5rocks.com/en/tutorials/speed/rendering/).
-
 ### MDLComponent
 
 MDLComponent provides the basic mechanisms for implementing component classes.
@@ -124,24 +119,7 @@ MDLComponent provides the basic mechanisms for implementing component classes.
 ```javascript
 import MyComponentFoundation from './foundation';
 
-export default class MyComponent extends MDLComponent {
-  static buildDom() {
-    const {ROOT, MESSAGE, BUTTON} = MyComponentFoundation.cssClasses;
-    const root = document.createElement('div');
-    root.classList.add(ROOT);
-
-    const message = document.createElement('p');
-    message.classList.add(MESSAGE);
-    root.appendChild(message);
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.classList.add(BUTTON);
-    root.appendChild(button);
-
-    return root;
-  }
-
+export class MyComponent extends MDLComponent {
   static attachTo(root) {
     return new MyComponent(root);
   }
@@ -178,9 +156,13 @@ export default class MyComponent extends MDLComponent {
 
 | method | description |
 | --- | --- |
+| `initialize(...args)` | Called after the root element is attached to the component, but _before_ the foundation is instantiated. Any positional arguments passed to the component constructor after the root element, along with the optional foundation 2nd argument, will be provided to this method. This is a good place to do any setup work normally done within a constructor function. |
 | `getDefaultFoundation()` | Returns an instance of a foundation class properly configured for the component. Called when no foundation instance is given within the constructor. Subclasses **must** implement this method. |
 | `initialSyncWithDOM()` | Called within the constructor. Subclasses may override this method if they wish to perform initial synchronization of state with the host DOM element. For example, a slider may want to check if its host element contains a pre-set value, and adjust its internal state accordingly. Note that the same caveats apply to this method as to foundation class lifecycle methods. Defaults to a no-op. |
 | `destroy()` | Subclasses may override this method if they wish to perform any additional cleanup work when a component is destroyed. For example, a component may want to deregister a window resize listener. |
+| `listen(type: string, handler: EventListener)` | Adds an event listener to the component's root node for the given `type`. Note that this is simply a proxy to `this.root_.addEventListener`. |
+| `unlisten(type: string, handler: EventListener)` | Removes an event listener from the component's root node. Note that this is simply a proxy to `this.root_.removeEventListener`. |
+| `emit(type: string, data: Object)` | Dispatches a custom event of type `type` with detail `data` from the component's root node. This is the preferred way of dispatching events within our vanilla components. |
 
 #### Static Methods
 
@@ -188,12 +170,46 @@ In addition to methods inherited, subclasses should implement the following two 
 
 | method | description |
 | --- | --- |
-| `buildDom(...any) => HTMLElement` | Subclasses may implement this as a convenience method to construct the proper DOM for a component. Users could then rely on this as an alternative to having to construct the DOM themselves. However, it should exist purely for convenience and _never_ be used as a dependency for the component itself. |
 | `attachTo(root) => <ComponentClass>` | Subclasses must implement this as a convenience method to instantiate and return an instance of the class using the root element provided. This will be used within `mdl-auto-init`, and in the future its presence may be enforced via a custom lint rule.|
 
 #### Foundation Lifecycle handling
 
 `MDLComponent` calls its foundation's `init()` function within its _constructor_, and its foundation's `destroy()` function within its own _destroy()_ function. Therefore it's important to remember to _always call super() when overriding destroy()_. Not doing so can lead to leaked resources.
+
+#### Initialization and constructor parameters
+
+If you need to pass in additional parameters into a component's constructor, you can make use of the
+`initialize` method, as shown above. An example of this is passing in a child component as a
+dependency.
+
+```js
+class MyComponent extends MDLComponent {
+  initialize(childComponent = null) {
+    this.child_ = childComponent ?
+      childComponent : new ChildComponent(this.root_.querySelector('.child'));
+  }
+
+  getDefaultFoundation() {
+    return new MyComponentFoundation({
+      doSomethingWithChildComponent: () => this.child_.doSomething(),
+      // ...
+    });
+  }
+}
+```
+
+You could call this code like so:
+
+```js
+const childComponent = new ChildComponent(document.querySelector('.some-child'));
+const myComponent = new MyComponent(
+  document.querySelector('.my-component'), /* foundation */ undefined, childComponent
+);
+// use myComponent
+```
+
+> NOTE: You could also pass in an initialized foundation if you wish. The example above simply
+> showcases how you could pass in initialization arguments without instantiating a foundation.
 
 #### Best Practice: Keep your adapters simple
 
@@ -207,8 +223,8 @@ class MyComponent {
   // ...
   getDefaultFoundation() {
     return new MyComponentFoundation({
-        toggleClass: className => util.toggleClass(this.root_, className),
-        // ...
+      toggleClass: className => util.toggleClass(this.root_, className),
+      // ...
     });
   }
 }

@@ -5,6 +5,7 @@
   - [Installation](#installation)
   - [Usage](#usage)
       - [Adding the ripple Sass](#adding-the-ripple-sass)
+        - [The full Sass API](#the-full-sass-api)
       - [Adding the ripple JS](#adding-the-ripple-js)
         - [ES2015](#es2015)
         - [CommonJS](#commonjs)
@@ -15,10 +16,14 @@
       - [Using DOM (Component Only)](#using-dom-component-only)
     - [The mdl-ripple-surface class](#the-mdl-ripple-surface-class)
     - [Using the foundation](#using-the-foundation)
+    - [Using the vanilla DOM adapter](#using-the-vanilla-DOM-adapter)
   - [Tips/Tricks](#tipstricks)
     - [Integrating ripples into MDL components](#integrating-ripples-into-mdl-components)
     - [Using a sentinel element for a ripple](#using-a-sentinel-element-for-a-ripple)
+    - [Keyboard interaction for custom UI components](#keyboard-interaction-for-custom-ui-components)
+    - [Specifying known element dimensions](#specifying-known-element-dimensions)
   - [Caveat: Safari](#caveat-safari)
+  - [Caveat: Theme Custom Variables](#caveat-theme-custom-variables)
 
 MDL Ripple provides the Javascript and CSS required
 to provide components (or any element at all) with a
@@ -114,6 +119,20 @@ When a ripple is successfully initialized on an element, it dynamically adds a `
 
 This code sets up `.surface` with the correct css variables as well as `will-change` properties to support the ripple. It then dynamically generates the correct selectors such that the surface's `::before` element functions as a background ripple, and the surface's `::after` element functions as a foreground ripple.
 
+##### The full Sass API
+
+Both `mdl-ripple-bg` and `mdl-ripple-fg` take an `$config` map as an optional
+argument, with which you can specify the following parameters:
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `pseudo` | The name of the pseudo-element you want to use to style the ripple. Using pseudo-elements to style ripples obviates the need for any extra DOM and is recommended. However,
+if given `null` it will style the element directly, rather than attaching styles to the pseudo element. | `null` |
+| `radius` | For _bounded_ ripples, specifies radii of the ripple circles. Can be any valid numeric CSS unit. | `100%` |
+| `theme-style` | When provided, will use a style specified by `mdl-theme` to provide colors to the ripple. For example, passing `(theme-style: primary)` would make the ripples the color of the theme's primary color. Note that there are some current limitations here. See [below](#caveat-theme-custom-variables) | `null` |
+| `base-color` | The RGB color (_without_ an alpha component) of the ripple. This will only be used if `theme-style` isn't specified. | `black` |
+| `opacity` | A unitless number from `0-1` specifying the opacity that either the `base-color` or the `theme-style` color will take on. | `.06` |
+
 #### Adding the ripple JS
 
 First import the ripple JS
@@ -121,13 +140,13 @@ First import the ripple JS
 ##### ES2015
 
 ```javascript
-import MDLRipple, {MDLRippleFoundation} from 'mdl-ripple';
+import {MDLRipple, MDLRippleFoundation} from 'mdl-ripple';
 ```
 
 ##### CommonJS
 
 ```javascript
-const MDLRipple = require('mdl-ripple').default;
+const MDLRipple = require('mdl-ripple').MDLRipple;
 const MDLRippleFoundation = require('mdl-ripple').MDLRippleFoundation;
 ```
 
@@ -135,7 +154,7 @@ const MDLRippleFoundation = require('mdl-ripple').MDLRippleFoundation;
 
 ```javascript
 require('path/to/mdl-ripple', function(mdlRipple) {
-  const MDLRipple = mdlRipple.default;
+  const MDLRipple = mdlRipple.MDLRipple;
   const MDLRippleFoundation = mdlRipple.MDLRippleFoundation;
 });
 ```
@@ -143,8 +162,8 @@ require('path/to/mdl-ripple', function(mdlRipple) {
 ##### Global
 
 ```javascript
-const MDLRipple = global.mdl.Ripple.default;
-const MDLRippleFoundation = global.mdl.Ripple.MDLRippleFoundation;
+const MDLRipple = mdl.ripple.MDLRipple;
+const MDLRippleFoundation = mdl.ripple.MDLRippleFoundation;
 ```
 
 Then, simply attach initialize the ripple with the correct DOM.
@@ -163,8 +182,8 @@ MDLRipple.attachTo(document.querySelector('.surface'));
 
 ### Unbounded Ripples
 
-If you'd like to use _unbounded_ ripples, such as those used for checkboxes and radio buttons
-(_TK_), you can do so either imperatively in JS _or_ declaratively using the DOM.
+If you'd like to use _unbounded_ ripples, such as those used for checkboxes and radio buttons, you
+can do so either imperatively in JS _or_ declaratively using the DOM.
 
 #### Using JS
 
@@ -214,7 +233,19 @@ a ripple:
 <div class="mdl-ripple-surface my-surface" tabindex="0">Ripples FTW!</div>
 ```
 
-Check out our demo (in the top-level `demos/` directory) to see this class in action.
+There are also modifier classes that can be used for styling ripple surfaces using the configured
+theme's primary and accent colors
+
+```html
+<div class="mdl-ripple-surface mdl-ripple-surface--primary my-surface" tabindex="0">
+  Surface with a primary-colored ripple.
+</div>
+<div class="mdl-ripple-surface mdl-ripple-surface--accent my-surface" tabindex="0">
+  Surface with an accent-colored ripple.
+</div>
+```
+
+Check out our demo (in the top-level `demos/` directory) to see these classes in action.
 
 ### Using the foundation
 
@@ -237,6 +268,26 @@ ripple to. The adapter API is as follows:
 | `computeBoundingRect() => ClientRect` | Returns the ClientRect for the surface. |
 | `getWindowPageOffset() => {x: number, y: number}` | Returns the `page{X,Y}Offset` values for the window object as `x` and `y` properties of an object (respectively). |
 
+### Using the vanilla DOM adapter
+
+Because ripples are used so ubiquitously throughout our codebase, `MDLRipple` has a static
+`createAdapter(instance)` method that can be used to instantiate an adapter object that can be used by
+any `MDLComponent` that needs to instantiate an `MDLRippleFoundation` with custom functionality.
+
+```js
+class MyMDLComponent extends MDLComponent {
+  constructor() {
+    super(...arguments);
+    this.ripple_ = new MDLRippleFoundation(Object.assign(MDLRipple.createAdapter(this), {
+      isSurfaceActive: () => this.isActive_
+    }));
+    this.ripple_.init();
+  }
+
+  // ...
+}
+```
+
 ## Tips/Tricks
 
 ### Integrating ripples into MDL components
@@ -258,6 +309,68 @@ the same effect.
 </div>
 ```
 
+### Keyboard interaction for custom UI components
+
+Different keyboard events activate different elements. For example, the space key activate buttons, while the enter key activates links. Handling this by sniffing the key/keyCode of an event is brittle and error-prone, so instead we take the approach of using `adapter.isSurfaceActive()`. The
+way in which our default vanilla DOM adapter determines this is by using
+`element.matches(':active')`. However, this approach will _not_ work for custom components that
+the browser does not apply this pseudo-class to.
+
+If you want your component to work properly with keyboard events, you'll have to listen for both `keydown` and `keyup` and set some sort of state that the adapter can use to determine whether or
+not the surface is "active", e.g.
+
+```js
+class MyComponent {
+  constructor(el) {
+    this.el = el;
+    this.active = false;
+    this.ripple_ = new MDLRippleFoundation({
+      // ...
+      isSurfaceActive: () => this.active
+    });
+    this.el.addEventListener('keydown', evt => {
+      if (isSpace(evt)) {
+        this.active = true;
+      }
+    });
+    this.el.addEventListener('keyup', evt => {
+      if (isSpace(evt)) {
+        this.active = false;
+      }
+    });
+  }
+}
+```
+
+### Specifying known element dimensions
+
+If you asynchronously load style resources, such as loading stylesheets dynamically via scripts
+or loading fonts, then `adapter.getClientRect()` may by default return _incorrect_ dimensions when
+the ripple foundation is initialized. For example, if you put a ripple on an element that uses an
+icon font, and the size of the icon font isn't specified at initialization time, then if that icon
+font hasn't loaded it may report the intrinsic width/height incorrectly. In order to prevent this,
+you can override the default behavior of `getClientRect()` to return the correct results. For
+example, if you know an icon font sizes its elements to `24px` width/height, you can do the
+following:
+
+```js
+this.ripple_ = new MDLRippleFoundation({
+  // ...
+  computeBoundingRect: () => {
+    const {left, top} = element.getBoundingClientRect();
+    const dim = 24;
+    return {
+      left,
+      top,
+      width: dim,
+      height: dim,
+      right: left + dim,
+      bottom: top + dim
+    };
+  }
+});
+```
+
 ## Caveat: Safari
 
 > TL;DR ripples are disabled in Safari < 10 because of a nasty CSS variables bug.
@@ -272,3 +385,20 @@ webkit versions: Webkit builds which have this bug fixed (e.g. the builds used i
 support [CSS 4 Hex Notation](https://drafts.csswg.org/css-color/#hex-notation) while those do not
 have the fix don't. We use this to reliably feature-detect whether we are working with a WebKit
 build that can handle our usage of CSS variables.
+
+## Caveat: Theme Custom Variables
+
+> TL;DR theme custom variable changes will not propagate to ripples if the browser does not support
+> [CSS 4 color-mod functions](https://drafts.csswg.org/css-color/).
+
+The way that [mdl-theme works](https://github.com/google/material-design-lite/tree/master/packages/mdl-theme#mdl-theme-prop-mixin) is that it emits two properties: one with the hard-coded sass variable, and another for a
+CSS variable that can be interpolated. The problem is that ripple backgrounds need to have an opacity, and currently there's no way to opacify a pre-existing color defined by a CSS variable.
+There is an editor's draft for a `color-mod` function (see link in TL;DR) that _can_ do this:
+
+```css
+background: color(var(--mdl-theme-primary) a(6%));
+```
+
+But as far as we know, no browsers yet support it. We have added a `@supports` clause into our code
+to make sure that it can be used as soon as browsers adopt it, but for now this means that _changes
+to your theme via a custom variable will not propagate to ripples._ We don't see this being a gigantic issue as we envision most users configuring one theme via sass. For places where you do need this, special treatment will have to be given.

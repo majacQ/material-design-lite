@@ -17,13 +17,6 @@
 import MDLFoundation from './foundation';
 
 export default class MDLComponent {
-  static buildDom() {
-    // Classes which extend MDLBase should provide a buildDom() method which returns a node containing the basic
-    // DOM needed for rendering the component. Clients can then opt to use buildDom() as a convenience method
-    // rather than having to write the DOM themselves.
-    return document.createElement('div');
-  }
-
   static attachTo(root) {
     // Subclasses which extend MDLBase should provide an attachTo() method that takes a root element and
     // returns an instantiated component with its root set to that element. Also note that in the cases of
@@ -32,11 +25,18 @@ export default class MDLComponent {
     return new MDLComponent(root, new MDLFoundation());
   }
 
-  constructor(root, foundation) {
+  constructor(root, foundation, ...args) {
     this.root_ = root;
+    this.initialize(...args);
     this.foundation_ = foundation === undefined ? this.getDefaultFoundation() : foundation;
     this.foundation_.init();
     this.initialSyncWithDOM();
+  }
+
+  initialize(/* ...args */) {
+    // Subclasses can override this to do any additional setup work that would be considered part of a
+    // "constructor". Essentially, it is a hook into the parent constructor before the foundation is
+    // initialized. Any additional arguments besides root and foundation will be passed in here.
   }
 
   getDefaultFoundation() {
@@ -57,5 +57,31 @@ export default class MDLComponent {
     // Subclasses may implement this method to release any resources / deregister any listeners they have
     // attached. An example of this might be deregistering a resize event from the window object.
     this.foundation_.destroy();
+  }
+
+  // Wrapper method to add an event listener to the component's root element. This is most useful when
+  // listening for custom events.
+  listen(evtType, handler) {
+    this.root_.addEventListener(evtType, handler);
+  }
+
+  // Wrapper method to remove an event listener to the component's root element. This is most useful when
+  // unlistening for custom events.
+  unlisten(evtType, handler) {
+    this.root_.removeEventListener(evtType, handler);
+  }
+
+  // Fires a cross-browser-compatible custom event from the component root of the given type,
+  // with the given data.
+  emit(evtType, evtData) {
+    let evt;
+    if (typeof CustomEvent === 'function') {
+      evt = new CustomEvent(evtType, {detail: evtData});
+    } else {
+      evt = document.createEvent('CustomEvent');
+      evt.initCustomEvent(evtType, false, false, evtData);
+    }
+
+    this.root_.dispatchEvent(evt);
   }
 }

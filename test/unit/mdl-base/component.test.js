@@ -15,8 +15,10 @@
  */
 
 import test from 'tape';
+import domEvents from 'dom-events';
 import td from 'testdouble';
-import MDLComponent from '../../../packages/mdl-base';
+
+import {MDLComponent} from '../../../packages/mdl-base';
 
 class FakeComponent extends MDLComponent {
   get root() {
@@ -34,17 +36,15 @@ class FakeComponent extends MDLComponent {
     });
   }
 
+  initialize(...args) {
+    this.initializeArgs = args;
+    this.initializeComesBeforeFoundation = !this.foundation_;
+  }
+
   initialSyncWithDOM() {
     this.synced = true;
   }
 }
-
-test('provides a static buildDom() method that returns an empty div by default', t => {
-  const dom = MDLComponent.buildDom();
-  t.equal(dom.tagName.toLowerCase(), 'div');
-  t.equal(dom.innerHTML, '');
-  t.end();
-});
 
 test('provides a static attachTo() method that returns a basic instance with the specified root', t => {
   const root = document.createElement('div');
@@ -109,5 +109,57 @@ test("provides a default destroy() method which calls the foundation's destroy()
   const f = new FakeComponent(root, foundation);
   f.destroy();
   t.doesNotThrow(() => td.verify(foundation.destroy()));
+  t.end();
+});
+
+test('#initialize is called within constructor and passed any additional positional component args', t => {
+  const f = new FakeComponent(document.createElement('div'), /* foundation */ undefined, 'foo', 42);
+  t.deepEqual(f.initializeArgs, ['foo', 42]);
+  t.end();
+});
+
+test('#initialize is called before getDefaultFoundation()', t => {
+  const f = new FakeComponent(document.createElement('div'));
+  t.true(f.initializeComesBeforeFoundation);
+  t.end();
+});
+
+test('#listen adds an event listener to the root element', t => {
+  const root = document.createElement('div');
+  const f = new FakeComponent(root);
+  const handler = td.func('eventHandler');
+  f.listen('FakeComponent:customEvent', handler);
+  domEvents.emit(root, 'FakeComponent:customEvent');
+  t.doesNotThrow(() => td.verify(handler(td.matchers.anything())));
+  t.end();
+});
+
+test('#unlisten removes an event listener from the root element', t => {
+  const root = document.createElement('div');
+  const f = new FakeComponent(root);
+  const handler = td.func('eventHandler');
+  root.addEventListener('FakeComponent:customEvent', handler);
+  f.unlisten('FakeComponent:customEvent', handler);
+  domEvents.emit(root, 'FakeComponent:customEvent');
+  t.doesNotThrow(() => td.verify(handler(td.matchers.anything()), {times: 0}));
+  t.end();
+});
+
+test('#emit dispatches a custom event with the supplied data', t => {
+  const root = document.createElement('div');
+  const f = new FakeComponent(root);
+  const handler = td.func('eventHandler');
+  let evt = null;
+  td.when(handler(td.matchers.isA(Object))).thenDo(evt_ => {
+    evt = evt_;
+  });
+  const data = {evtData: true};
+  const type = 'customeventtype';
+
+  root.addEventListener(type, handler);
+  f.emit(type, data);
+  t.true(evt !== null);
+  t.equal(evt.type, type);
+  t.deepEqual(evt.detail, data);
   t.end();
 });

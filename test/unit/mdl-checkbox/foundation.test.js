@@ -18,6 +18,9 @@ import test from 'tape';
 import bel from 'bel';
 import lolex from 'lolex';
 import td from 'testdouble';
+
+import {setupFoundationTest} from '../helpers/setup';
+import {verifyDefaultAdapter} from '../helpers/foundation';
 import MDLCheckboxFoundation from '../../../packages/mdl-checkbox/foundation';
 import {cssClasses, strings, numbers} from '../../../packages/mdl-checkbox/constants';
 
@@ -29,11 +32,9 @@ const DESC_UNDEFINED = {
 };
 
 function setupTest() {
+  const {foundation, mockAdapter} = setupFoundationTest(MDLCheckboxFoundation);
   const nativeControl = bel`<input type="checkbox">`;
-  const mockAdapter = td.object(MDLCheckboxFoundation.defaultAdapter);
   td.when(mockAdapter.getNativeControl()).thenReturn(nativeControl);
-
-  const foundation = new MDLCheckboxFoundation(mockAdapter);
   return {foundation, mockAdapter, nativeControl};
 }
 
@@ -113,17 +114,11 @@ test('exports numbers', t => {
 });
 
 test('defaultAdapter returns a complete adapter implementation', t => {
-  const {defaultAdapter} = MDLCheckboxFoundation;
-  const methods = Object.keys(defaultAdapter).filter(k => typeof defaultAdapter[k] === 'function');
-
-  t.equal(methods.length, Object.keys(defaultAdapter).length, 'Every adapter key must be a function');
-  t.deepEqual(methods, [
+  verifyDefaultAdapter(MDLCheckboxFoundation, [
     'addClass', 'removeClass', 'registerAnimationEndHandler', 'deregisterAnimationEndHandler',
     'registerChangeHandler', 'deregisterChangeHandler', 'getNativeControl', 'forceLayout',
     'isAttachedToDOM'
-  ]);
-  // Test default methods
-  methods.forEach(m => t.doesNotThrow(defaultAdapter[m]));
+  ], t);
 
   t.end();
 });
@@ -195,6 +190,81 @@ test('#destroy handles case when WebIDL attrs cannot be overridden (Safari)', t 
     t.doesNotThrow(() => foundation.init(), 'init sanity check');
     t.doesNotThrow(() => foundation.destroy());
   });
+  t.end();
+});
+
+test('#setChecked updates the value of nativeControl.checked', t => {
+  const {foundation, nativeControl} = setupTest();
+  foundation.setChecked(true);
+  t.true(foundation.isChecked());
+  t.true(nativeControl.checked);
+  foundation.setChecked(false);
+  t.false(foundation.isChecked());
+  t.false(nativeControl.checked);
+  t.end();
+});
+
+test('#setChecked works when no native control is returned', t => {
+  const {foundation, mockAdapter} = setupTest();
+  td.when(mockAdapter.getNativeControl()).thenReturn(null);
+  t.doesNotThrow(() => foundation.setChecked(true));
+  t.end();
+});
+
+test('#isChecked returns false when no native control is returned', t => {
+  const {foundation, mockAdapter} = setupTest();
+  td.when(mockAdapter.getNativeControl()).thenReturn(null);
+  t.false(foundation.isChecked());
+  t.end();
+});
+
+test('#setIndeterminate updates the value of nativeControl.indeterminate', t => {
+  const {foundation, nativeControl} = setupTest();
+  foundation.setIndeterminate(true);
+  t.true(foundation.isIndeterminate());
+  t.true(nativeControl.indeterminate);
+  foundation.setIndeterminate(false);
+  t.false(foundation.isIndeterminate());
+  t.false(nativeControl.indeterminate);
+  t.end();
+});
+
+test('#setIndeterminate works when no native control is returned', t => {
+  const {foundation, mockAdapter} = setupTest();
+  td.when(mockAdapter.getNativeControl()).thenReturn(null);
+  t.doesNotThrow(() => foundation.setIndeterminate(true));
+  t.end();
+});
+
+test('#isIndeterminate returns false when no native control is returned', t => {
+  const {foundation, mockAdapter} = setupTest();
+  td.when(mockAdapter.getNativeControl()).thenReturn(null);
+  t.false(foundation.isIndeterminate());
+  t.end();
+});
+
+test('#setDisabled updates the value of nativeControl.disabled', t => {
+  const {foundation, nativeControl} = setupTest();
+  foundation.setDisabled(true);
+  t.true(foundation.isDisabled());
+  t.true(nativeControl.disabled);
+  foundation.setDisabled(false);
+  t.false(foundation.isDisabled());
+  t.false(nativeControl.disabled);
+  t.end();
+});
+
+test('#isDisabled returns false when no native control is returned', t => {
+  const {foundation, mockAdapter} = setupTest();
+  td.when(mockAdapter.getNativeControl()).thenReturn(null);
+  t.false(foundation.isDisabled());
+  t.end();
+});
+
+test('#setDisabled works when no native control is returned', t => {
+  const {foundation, mockAdapter} = setupTest();
+  td.when(mockAdapter.getNativeControl()).thenReturn(null);
+  t.doesNotThrow(() => foundation.setDisabled(true));
   t.end();
 });
 

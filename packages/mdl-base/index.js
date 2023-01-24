@@ -14,7 +14,5 @@
  * limitations under the License.
  */
 
-import MDLComponent from './component';
 export {default as MDLFoundation} from './foundation';
-export {MDLBaseAdapter as MDLBaseAdapterLegacy, ref as refLegacy} from './adapter';
-export default MDLComponent;
+export {default as MDLComponent} from './component';

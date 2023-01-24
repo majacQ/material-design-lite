@@ -14,22 +14,40 @@
  * limitations under the License.
  */
 
-import BaseComponent from 'mdl-base';
-import Checkbox from 'mdl-checkbox';
-import Radio from 'mdl-radio';
-import Ripple from 'mdl-ripple';
+import * as base from 'mdl-base';
+import * as checkbox from 'mdl-checkbox';
+import * as iconToggle from 'mdl-icon-toggle';
+import * as radio from 'mdl-radio';
+import * as ripple from 'mdl-ripple';
+import * as drawer from 'mdl-drawer';
+import * as textfield from 'mdl-textfield';
+import * as snackbar from 'mdl-snackbar';
+import * as menu from 'mdl-menu';
+import * as select from 'mdl-select';
 import autoInit from 'mdl-auto-init';
 
-console.info('Hello, MDL!!!');
-
 // Register all components
-autoInit.register('MDLCheckbox', Checkbox);
+autoInit.register('MDLCheckbox', checkbox.MDLCheckbox);
+autoInit.register('MDLTemporaryDrawer', drawer.MDLTemporaryDrawer);
+autoInit.register('MDLRipple', ripple.MDLRipple);
+autoInit.register('MDLIconToggle', iconToggle.MDLIconToggle);
+autoInit.register('MDLRadio', radio.MDLRadio);
+autoInit.register('MDLSnackbar', snackbar.MDLSnackbar);
+autoInit.register('MDLTextfield', textfield.MDLTextfield);
+autoInit.register('MDLSimpleMenu', menu.MDLSimpleMenu);
+autoInit.register('MDLSelect', select.MDLSelect);
 
 // Export all components.
 export {
-  BaseComponent,
-  Checkbox,
-  Radio,
-  Ripple,
+  base,
+  checkbox,
+  iconToggle,
+  radio,
+  ripple,
+  snackbar,
+  drawer,
+  textfield,
+  menu,
+  select,
   autoInit
 };
