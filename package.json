@@ -1,4 +1,5 @@
 {
+  "name": "material-design-lite-master",
   "private": true,
   "description": "Material Design Lite",
   "license": "Apache-2.0",
@@ -15,7 +16,7 @@
     "lint:js": "eslint packages test webpack.config.js karma.conf.js",
     "lint:css": "stylelint packages/**/*.scss",
     "lint": "npm-run-all --parallel lint:*",
-    "postinstall": "lerna bootstrap",
+    "postinstall": "lerna init && lerna bootstrap",
     "pretest": "npm run lint",
     "test": "karma start --single-run",
     "posttest": "istanbul report --root coverage text-summary && istanbul check-coverage --lines 95 --statements 95 --branches 95 --functions 95",
